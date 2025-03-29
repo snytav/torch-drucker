@@ -58,8 +58,8 @@ def Vlasov_Poisson_Landau_damping():
 
         # X-coordinate shift at half time step
         for J in range(1, M - 1):
-            SGN = np.sign(v[J])
-            SHIFT = abs(v[J]) * 0.5 * dt / dx
+            SGN = torch.sign(v[J])
+            SHIFT = torch.abs(v[J]) * 0.5 * dt / dx
             II = int(SHIFT)
             SHIFT -= II
 
