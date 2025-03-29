@@ -1,130 +1,105 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.interpolate import interp2d
-
-from matplotlib import cm
-import torch
 
 
-
-def Cheng_Knorr_Sonnerdrucker():
-    # Problem parameters
-    inter_type = 'linear'  # Change to 'spline' for cubic spline scheme
-    N = 10
-    M = N
-    k = 0.5
-    alpha = 0.05
-    vmax = 2 * np.pi
-    CFL = 3.8
-    t_end = 15.0
+def Vlasov_Poisson_Landau_damping():
+    # Define problem parameters
+    N = 64
+    M = 127
+    k = 0.3
+    alpha = 0.3
+    vmax = 8.0
+    dt = 0.1
+    t_end = 100.0
     L = 2 * np.pi / k
 
     # Grid definition
-    #x = np.linspace(0, L, N)
-    x = torch.linspace(0, L, N)
-    #v = np.linspace(-vmax, vmax, M)
-    v = torch.linspace(-vmax, vmax, M)
+    x = np.linspace(0, L, N - 2)
+    v = np.linspace(-vmax, vmax, M)
     dx = x[1] - x[0]
     dv = v[1] - v[0]
-    X, V = np.meshgrid(x.numpy(), v.numpy())
+
+    # Calculate number of time steps
+    N_steps = round(t_end / dt)
+
+    # Add ghost nodes in X
+    x = np.concatenate(([-dx], x, [L + dx]))
+    X, V = np.meshgrid(x, v)
     X = X.T
     V = V.T
 
-    # Initial conditions
-    f = np.exp(-V ** 2 / 2) / np.sqrt(2 * np.pi) * (1.0 + alpha * np.cos(k * X)) * V ** 2
-    f = torch.from_numpy(f)
-    plt.figure()
-    #plt.surf(X, V, f)
-    fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
-    surf = ax.plot_surface(X, V, f.numpy(), cmap=cm.coolwarm,
-                           linewidth=0, antialiased=False)
-    fig.colorbar(surf)
-    plt.savefig('initial.png')
+    # Initial conditions - Maxwellian in V and perturbed in X
+    f = np.exp(-V ** 2 / 2) / np.sqrt(2 * np.pi) * (1.0 + alpha * np.cos(k * X))
 
-    # Apply periodic borders and zero at |v| beyond vmax
+    # Apply periodic values at ghost nodes
     f[-1, :] = f[1, :]
     f[0, :] = f[-2, :]
-    f[0, :] = 0
-    f[-1, :] = 0
 
     # Open maximized figure window
-    plt.figure(figsize=(10, 10))
-    plt.ion()
-
-    # Preallocate memory
-    E = torch.zeros_like(x)
+    plt.figure(figsize=(12, 8))
 
     # Start main calculation procedure
-    time = 0
-    while time < t_end:
-        # Estimate time step using CFL condition
-        dt = CFL / (vmax / dx + torch.max(torch.abs(E)) / dv)
-        if dt > t_end - time:
-            dt = t_end - time
-
+    T = 0
+    while T <= N_steps:
         # Plot EDF f(x,v,t) in phase space
-        plt.pcolor(x[1:-1], v[1:-1], f[1:-1, 1:-1].T)
-        plt.colorbar()
-        plt.axis('square')
-        plt.title('EDF f(x,v,t) in phase space')
-        plt.savefig('square.png')
-        plt.show()
-        plt.pause(0.01)
-        X = torch.from_numpy(X)
-        V = torch.from_numpy(V)
+        if T % 100 == 0:
+            plt.pcolormesh(x[1:-1], v[1:-1], f[1:-1, 1:-1].T, shading='auto', cmap='hot')
+            plt.axis('square')
+            plt.clim(0, 0.0001)
+            plt.colorbar()
+            plt.title(f'Nonlinear Landau damping, t = {T * dt:.2f}', fontsize=18)
+            plt.draw()
+            plt.pause(0.01)
 
         # X-coordinate shift at half time step
-        x_SHIFT = X - V * 0.5 * dt
+        for J in range(1, M - 1):
+            SGN = np.sign(v[J])
+            SHIFT = abs(v[J]) * 0.5 * dt / dx
+            II = int(SHIFT)
+            SHIFT -= II
 
-        x_SHIFT = torch.where(x_SHIFT <= 0, x_SHIFT + L, x_SHIFT)
-        x_SHIFT = torch.where(x_SHIFT >= L, x_SHIFT - L, x_SHIFT)
+            # Make circular shift
+            f_temp = np.roll(f[:, J], SGN.astype(int) * II)
+            I = range(1, N - 1)
+            Dxf = np.zeros(N)
+            Dxf[1:-1] = SHIFT * (f_temp[1:-1] + SGN * (f_temp[2:] - f_temp[:-2]) * (1.0 - SHIFT) / 4.0)
 
-        interp_func = interp2d(X.flatten(), V.flatten(), f.flatten(), kind=inter_type)
-        f = interp_func(x_SHIFT.flatten(), V.flatten()).T
+            # Apply periodic border conditions for Dxf
+            Dxf[-1] = Dxf[1]
+            Dxf[0] = Dxf[-2]
+
+            # New distribution function after shift
+            f[1:-1, J] = f_temp[1:-1] + Dxf[1 - SGN] - Dxf[1:]
 
         # Apply periodic boundaries in X-coordinate
-        f[N - 1, :] = f[1, :]
-        f[0, :] = f[N - 2, :]
+        f[-1, :] = f[1, :]
+        f[0, :] = f[-2, :]
 
         # Electrical field strength from exact solution of Poisson's equation
         E = np.cumtrapz(np.trapz(f, v, axis=1), x) - x
         E -= np.mean(E)
-        E = np.zeros_like(E)
 
         # V-coordinate shift at full time step
-        Vsh = V - E[:, np.newaxis] * dt
-        Vsh = np.where((Vsh < vmax) & (Vsh >= -vmax), Vsh, 0)
+        for I in range(1, N - 1):
+            SGN = np.sign(E[I])
+            SHIFT = abs(E[I]) * dt / dv
+            JJ = int(SHIFT)
+            SHIFT -= JJ
 
-        interp_func = interp2d(X.flatten(), V.flatten(), f.flatten(), kind=inter_type)
-        f = interp_func(X.flatten(), Vsh.flatten()).T
+            f_temp = np.zeros(M)
+            if SGN > 0:
+                f_temp[0:JJ] = 0.0
+                f_temp[JJ:M] = f[I, 0:(M - JJ)]
+            else:
+                f_temp[0] = 0.0
+                f_temp[1:(M - JJ)] = f[I, (JJ + 1):M]
+                f_temp[(M - JJ):M] = 0.0
 
-        # Boundary conditions
-        f[:, 0] = 0
-        f[:, -1] = 0
-        f[-1, :] = f[1, :]
-        f[0, :] = f[-2, :]
+            J = range(1, M - 1)
+            Dvf = np.zeros(M)
+            Dvf[1:-1] = SHIFT * (f_temp[1:-1] + SGN * (f_temp[2:] - f_temp[:-2]) * (1.0 - SHIFT))
 
-        # X-coordinate shift at half time step
-        x_SHIFT = X - V * 0.5 * dt
-        x_SHIFT = np.where(x_SHIFT <= 0, x_SHIFT + L, x_SHIFT)
-        x_SHIFT = np.where(x_SHIFT >= L, x_SHIFT - L, x_SHIFT)
-
-        interp_func = interp2d(X.flatten(), V.flatten(), f.flatten(), kind=inter_type)
-        f = interp_func(x_SHIFT.flatten(), V.flatten()).T
-
-        # Apply periodic boundaries in X-coordinate
-        f[N - 1, :] = f[1, :]
-        f[0, :] = f[N - 2, :]
-
-        # Next time step
-        time += dt
-
-    # Final EDF plot
-    plt.pcolor(x[1:-1], v[1:-1], f[1:-1, 1:-1].T)
-    plt.colorbar()
-    plt.title('Two stream instability', fontsize=18)
-    plt.axis('square')
-    plt.show()
+        T += 1
 
 
-Cheng_Knorr_Sonnerdrucker()
+Vlasov_Poisson_Landau_damping()
