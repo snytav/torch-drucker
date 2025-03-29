@@ -70,11 +70,14 @@ def Cheng_Knorr_Sonnerdrucker():
         plt.savefig('square.png')
         plt.show()
         plt.pause(0.01)
+        X = torch.from_numpy(X)
+        V = torch.from_numpy(V)
 
         # X-coordinate shift at half time step
         x_SHIFT = X - V * 0.5 * dt
-        x_SHIFT = np.where(x_SHIFT <= 0, x_SHIFT + L, x_SHIFT)
-        x_SHIFT = np.where(x_SHIFT >= L, x_SHIFT - L, x_SHIFT)
+
+        x_SHIFT = torch.where(x_SHIFT <= 0, x_SHIFT + L, x_SHIFT)
+        x_SHIFT = torch.where(x_SHIFT >= L, x_SHIFT - L, x_SHIFT)
 
         interp_func = interp2d(X.flatten(), V.flatten(), f.flatten(), kind=inter_type)
         f = interp_func(x_SHIFT.flatten(), V.flatten()).T
