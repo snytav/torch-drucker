@@ -15,8 +15,8 @@ def Vlasov_Poisson_Landau_damping():
     L = 2 * np.pi / k
 
     # Grid definition
-    x = np.linspace(0, L, N - 2)
-    v = np.linspace(-vmax, vmax, M)
+    x = torch.linspace(0, L, N - 2)
+    v = torch.linspace(-vmax, vmax, M)
     dx = x[1] - x[0]
     dv = v[1] - v[0]
 
@@ -24,13 +24,17 @@ def Vlasov_Poisson_Landau_damping():
     N_steps = round(t_end / dt)
 
     # Add ghost nodes in X
-    x = np.concatenate(([-dx], x, [L + dx]))
+    dx = dx.reshape(1)
+    L = L*torch.ones(1)
+    x = torch.cat((-dx, x, L + dx))
     X, V = np.meshgrid(x, v)
     X = X.T
     V = V.T
 
     # Initial conditions - Maxwellian in V and perturbed in X
     f = np.exp(-V ** 2 / 2) / np.sqrt(2 * np.pi) * (1.0 + alpha * np.cos(k * X))
+    f = torch.from_numpy(f)
+
 
     # Apply periodic values at ghost nodes
     f[-1, :] = f[1, :]
