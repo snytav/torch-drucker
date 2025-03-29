@@ -52,13 +52,13 @@ def Cheng_Knorr_Sonnerdrucker():
     plt.ion()
 
     # Preallocate memory
-    E = np.zeros_like(x)
+    E = torch.zeros_like(x)
 
     # Start main calculation procedure
     time = 0
     while time < t_end:
         # Estimate time step using CFL condition
-        dt = CFL / (vmax / dx + np.max(np.abs(E)) / dv)
+        dt = CFL / (vmax / dx + torch.max(torch.abs(E)) / dv)
         if dt > t_end - time:
             dt = t_end - time
 
