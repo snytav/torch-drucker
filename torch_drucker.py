@@ -60,7 +60,7 @@ def Vlasov_Poisson_Landau_damping():
 
             # Make circular shift
             f_temp = np.roll(f[:, J], SGN.astype(int) * II)
-            I = range(1, N - 1)
+            I = np.arange(1, N-1)
             Dxf = np.zeros(N)
             Dxf[1:-1] = SHIFT * (f_temp[1:-1] + SGN * (f_temp[2:] - f_temp[:-2]) * (1.0 - SHIFT) / 4.0)
 
@@ -69,7 +69,7 @@ def Vlasov_Poisson_Landau_damping():
             Dxf[0] = Dxf[-2]
 
             # New distribution function after shift
-            f[1:-1, J] = f_temp[1:-1] + Dxf[1 - SGN] - Dxf[1:]
+            f[1:-1, J] = f_temp[1:-1] + Dxf[I - SGN.astype(int)] - Dxf[I]
 
         # Apply periodic boundaries in X-coordinate
         f[-1, :] = f[1, :]
