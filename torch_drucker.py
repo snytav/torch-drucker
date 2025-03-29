@@ -2,6 +2,24 @@ import numpy as np
 import matplotlib.pyplot as plt
 import torch
 
+#https://discuss.pytorch.org/t/implementation-of-function-like-numpy-roll/964/6
+def roll(tensor, shift, axis):
+    if shift == 0:
+        return tensor
+
+    if axis < 0:
+        axis += tensor.dim()
+
+    dim_size = tensor.size(axis)
+    after_start = dim_size - shift
+    if shift < 0:
+        after_start = -shift
+        shift = dim_size - abs(shift)
+
+    before = tensor.narrow(axis, 0, dim_size - shift)
+    after = tensor.narrow(axis, after_start, shift)
+    return torch.cat([after, before], axis)
+
 
 def Vlasov_Poisson_Landau_damping():
     # Define problem parameters
@@ -64,7 +82,7 @@ def Vlasov_Poisson_Landau_damping():
             SHIFT -= II
 
             # Make circular shift
-            f_temp = np.roll(f[:, J], SGN.astype(int) * II)
+            f_temp = roll(f[:, J], SGN.int() * II,0)
             I = np.arange(1, N-1)
             Dxf = np.zeros(N)
             Dxf[1:-1] = SHIFT * (f_temp[1:-1] + SGN * (f_temp[2:] - f_temp[:-2]) * (1.0 - SHIFT) / 4.0)
