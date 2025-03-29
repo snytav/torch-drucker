@@ -83,8 +83,8 @@ def Vlasov_Poisson_Landau_damping():
 
             # Make circular shift
             f_temp = roll(f[:, J], SGN.int() * II,0)
-            I = np.arange(1, N-1)
-            Dxf = np.zeros(N)
+            I = torch.arange(1, N-1)
+            Dxf = torch.zeros(N)
             Dxf[1:-1] = SHIFT * (f_temp[1:-1] + SGN * (f_temp[2:] - f_temp[:-2]) * (1.0 - SHIFT) / 4.0)
 
             # Apply periodic border conditions for Dxf
@@ -92,19 +92,17 @@ def Vlasov_Poisson_Landau_damping():
             Dxf[0] = Dxf[-2]
 
             # New distribution function after shift
-            f[1:-1, J] = f_temp[1:-1] + Dxf[I - SGN.astype(int)] - Dxf[I]
+            f[1:-1, J] = f_temp[1:-1] + Dxf[I - SGN.int()] - Dxf[I]
 
         # Apply periodic boundaries in X-coordinate
         f[-1, :] = f[1, :]
         f[0, :] = f[-2, :]
 
         # Electrical field strength from exact solution of Poisson's equation
-        rho = torch.trapz(torch.from_numpy(f),
-            torch.from_numpy(v), axis=1)
-        E1 = torch.cumulative_trapezoid(rho,
-            torch.from_numpy(x))
+        rho = torch.trapz(f,v, axis=1)
+        E1 = torch.cumulative_trapezoid(rho,x)
         E1 = torch.cat((torch.zeros(1), E1), dim=0)
-        E  = E1 - torch.from_numpy(x)
+        E  = E1 - x
         E -= torch.mean(E)
 
         # V-coordinate shift at full time step
@@ -114,7 +112,7 @@ def Vlasov_Poisson_Landau_damping():
             JJ = int(SHIFT)
             SHIFT -= JJ
 
-            f_temp = np.zeros(M)
+            f_temp = torch.zeros(M)
             if SGN > 0:
                 f_temp[0:JJ] = 0.0
                 f_temp[JJ:M] = f[I, 0:(M - JJ)]
