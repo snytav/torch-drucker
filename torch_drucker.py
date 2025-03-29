@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import torch
 
 
 def Vlasov_Poisson_Landau_damping():
@@ -76,8 +77,13 @@ def Vlasov_Poisson_Landau_damping():
         f[0, :] = f[-2, :]
 
         # Electrical field strength from exact solution of Poisson's equation
-        E = np.cumtrapz(np.trapz(f, v, axis=1), x) - x
-        E -= np.mean(E)
+        rho = torch.trapz(torch.from_numpy(f),
+            torch.from_numpy(v), axis=1)
+        E1 = torch.cumulative_trapezoid(rho,
+            torch.from_numpy(x))
+        E1 = torch.cat((torch.zeros(1), E1), dim=0)
+        E  = E1 - torch.from_numpy(x)
+        E -= torch.mean(E)
 
         # V-coordinate shift at full time step
         for I in range(1, N - 1):
