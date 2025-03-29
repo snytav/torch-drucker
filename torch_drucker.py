@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import interp2d
 
 from matplotlib import cm
+import torch
 
 
 
@@ -19,20 +20,23 @@ def Cheng_Knorr_Sonnerdrucker():
     L = 2 * np.pi / k
 
     # Grid definition
-    x = np.linspace(0, L, N)
-    v = np.linspace(-vmax, vmax, M)
+    #x = np.linspace(0, L, N)
+    x = torch.linspace(0, L, N)
+    #v = np.linspace(-vmax, vmax, M)
+    v = torch.linspace(-vmax, vmax, M)
     dx = x[1] - x[0]
     dv = v[1] - v[0]
-    X, V = np.meshgrid(x, v)
+    X, V = np.meshgrid(x.numpy(), v.numpy())
     X = X.T
     V = V.T
 
     # Initial conditions
     f = np.exp(-V ** 2 / 2) / np.sqrt(2 * np.pi) * (1.0 + alpha * np.cos(k * X)) * V ** 2
+    f = torch.from_numpy(f)
     plt.figure()
     #plt.surf(X, V, f)
     fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
-    surf = ax.plot_surface(X, V, f, cmap=cm.coolwarm,
+    surf = ax.plot_surface(X, V, f.numpy(), cmap=cm.coolwarm,
                            linewidth=0, antialiased=False)
     fig.colorbar(surf)
     plt.savefig('initial.png')
