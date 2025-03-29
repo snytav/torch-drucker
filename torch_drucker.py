@@ -66,7 +66,9 @@ def Cheng_Knorr_Sonnerdrucker():
         plt.pcolor(x[1:-1], v[1:-1], f[1:-1, 1:-1].T)
         plt.colorbar()
         plt.axis('square')
-        plt.draw()
+        plt.title('EDF f(x,v,t) in phase space')
+        plt.savefig('square.png')
+        plt.show()
         plt.pause(0.01)
 
         # X-coordinate shift at half time step
