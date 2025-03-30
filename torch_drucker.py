@@ -127,5 +127,7 @@ def Vlasov_Poisson_Landau_damping():
 
         T += 1
 
+    np.savetxt('v_final.txt',f.numpy(),'%25.15e')
+
 
 Vlasov_Poisson_Landau_damping()
