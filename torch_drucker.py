@@ -127,8 +127,9 @@ def Vlasov_Poisson_Landau_damping():
     # Start main calculation procedure
     T = 0
     while T <= N_steps:
-        f = timestep(x,v,f,T,N,M,dt,dx,dv)
+        f1 = timestep(x,v,f,T,N,M,dt,dx,dv)
         T += 1
+        f = f1
 
     np.savetxt('v_final.txt',f.numpy(),'%25.15e')
 
