@@ -132,6 +132,7 @@ def Vlasov_Poisson_Landau_damping():
     while T <= N_steps:
         f1 = timestep(x,v,f,T,N,M,dt,dx,dv)
         T += 1
+        df = torch.max(torch.abs(f1-f))
         f = f1
 
     np.savetxt('v_final.txt',f.numpy(),'%25.15e')
