@@ -20,9 +20,10 @@ def roll(tensor, shift, axis):
     after = tensor.narrow(axis, after_start, shift)
     return torch.cat([after, before], axis)
 
-def timestep(x,v,f,T,N,M,dt,dx,dv):
+def timestep(x,v,f_in,T,N,M,dt,dx,dv):
+    f = torch.clone(f_in)
     # Plot EDF f(x,v,t) in phase space
-    if T % 100 == 0:
+    if T % 100 == -1:
         plt.pcolormesh(x[1:-1], v[1:-1], f[1:-1, 1:-1].T, shading='auto', cmap='hot')
         plt.axis('square')
         plt.clim(0, 0.0001)
@@ -64,7 +65,7 @@ def timestep(x,v,f,T,N,M,dt,dx,dv):
 
     # V-coordinate shift at full time step
     for I in range(1, N - 1):
-        SGN = np.sign(E[I])
+        SGN = torch.sign(E[I])
         SHIFT = abs(E[I]) * dt / dv
         JJ = int(SHIFT)
         SHIFT -= JJ
@@ -79,7 +80,7 @@ def timestep(x,v,f,T,N,M,dt,dx,dv):
             f_temp[(M - JJ):M] = 0.0
 
         J = range(1, M - 1)
-        Dvf = np.zeros(M)
+        Dvf = torch.zeros(M)
         Dvf[1:-1] = SHIFT * (f_temp[1:-1] + SGN * (f_temp[2:] - f_temp[:-2]) * (1.0 - SHIFT))
 
     return f
@@ -126,6 +127,8 @@ def Vlasov_Poisson_Landau_damping():
 
     # Start main calculation procedure
     T = 0
+    f.requires_grad=True
+
     while T <= N_steps:
         f1 = timestep(x,v,f,T,N,M,dt,dx,dv)
         T += 1
