@@ -85,6 +85,15 @@ def timestep(x,v,f_in,T,N,M,dt,dx,dv):
 
     return f
 
+def loss(model,x,v,f):
+    lf = 0.0
+    for i,xi in enumerate(x):
+        for j,vi in enumerate(v):
+            xt = torch.cat((xi.reshape(1),vi.reshape(1)))
+            y = model(xt)
+            lf += torch.abs(f[i,j] - y)
+    return lf
+
 def Vlasov_Poisson_Landau_damping():
     # Define problem parameters
     N = 64
@@ -128,12 +137,27 @@ def Vlasov_Poisson_Landau_damping():
     # Start main calculation procedure
     T = 0
     f.requires_grad=True
+    from NN import PDEnet
+    model = PDEnet(50)
+    optimizer = torch.optim.Adam(model.parameters(),lr = 0.01)
+
+
+    hist = np.zeros(N_steps)
 
     while T <= N_steps:
+        optimizer.zero_grad()
         f1 = timestep(x,v,f,T,N,M,dt,dx,dv)
         T += 1
         df = torch.max(torch.abs(f1-f))
         f = f1
+        lf = loss(model,x,v,f)
+        lf.backward(retain_graph=True)
+        optimizer.step()
+        print(T,lf.item())
+        hist[T] = lf.item()
+    plt.figure()
+    plt.plot(np.linspace(),hist)
+
 
     np.savetxt('v_final.txt',f.numpy(),'%25.15e')
 
