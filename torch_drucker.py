@@ -157,6 +157,8 @@ def Vlasov_Poisson_Landau_damping():
         hist[T] = lf.item()
     plt.figure()
     plt.plot(np.linspace(),hist)
+    plt.savefig('train_history.png')
+
 
 
     np.savetxt('v_final.txt',f.numpy(),'%25.15e')
