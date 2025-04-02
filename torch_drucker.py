@@ -124,6 +124,23 @@ def Vlasov_Poisson_Landau_damping():
 
     # Initial conditions - Maxwellian in V and perturbed in X
     f = np.exp(-V ** 2 / 2) / np.sqrt(2 * np.pi) * (1.0 + alpha * np.cos(k * X))
+    X, Y = np.meshgrid(x,v)
+
+
+    from matplotlib import cm
+    from matplotlib.ticker import LinearLocator
+
+    fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
+    # Plot the surface.
+    surf = ax.plot_surface(X, Y, f.T, cmap=cm.coolwarm,
+                           linewidth=0, antialiased=False)
+    plt.title('Initial distribution')
+    plt.xlabel('X')
+    plt.ylabel('V')
+    ax.colorbar(surf)
+    plt.savefig('initial.png')
+
+
     f = torch.from_numpy(f)
 
 
