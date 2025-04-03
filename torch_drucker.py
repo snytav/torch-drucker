@@ -42,8 +42,8 @@ def timestep(x,v,f_in,T,N,M,dt,dx,dv):
 
         # Make circular shift
         f_temp = roll(f[:, J], SGN.int() * II, 0)
-        I = torch.arange(1, N - 1)
-        Dxf = torch.zeros(N)
+        I = torch.arange(1, N - 1).to(f_temp.device)
+        Dxf = torch.zeros(N).to(f_temp.device)
         Dxf[1:-1] = SHIFT * (f_temp[1:-1] + SGN * (f_temp[2:] - f_temp[:-2]) * (1.0 - SHIFT) / 4.0)
 
         # Apply periodic border conditions for Dxf
@@ -60,7 +60,7 @@ def timestep(x,v,f_in,T,N,M,dt,dx,dv):
     # Electrical field strength from exact solution of Poisson's equation
     rho = torch.trapz(f, v, axis=1)
     E1 = torch.cumulative_trapezoid(rho, x)
-    E1 = torch.cat((torch.zeros(1), E1), dim=0)
+    E1 = torch.cat((torch.zeros(1).to(E1.device), E1), dim=0)
     E = E1 - x
     E -= torch.mean(E)
 
@@ -133,8 +133,12 @@ def Vlasov_Poisson_Landau_damping():
 
 
 
-    f = torch.from_numpy(f)
-    f = f.to(device)
+    f  = torch.from_numpy(f)
+    f  = f.to(device)
+    v  = v.to(device)
+    x  = x.to(device)
+    dx = dx.to(device)
+
 
 
     # Apply periodic values at ghost nodes
