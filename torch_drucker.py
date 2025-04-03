@@ -129,9 +129,12 @@ def Vlasov_Poisson_Landau_damping():
 
 
     # surf(X,Y,f,'Initial distribution')
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 
 
     f = torch.from_numpy(f)
+    f = f.to(device)
 
 
     # Apply periodic values at ghost nodes
@@ -147,6 +150,9 @@ def Vlasov_Poisson_Landau_damping():
     from NN import PDEnet
     model = PDEnet(50)
     optimizer = torch.optim.Adam(model.parameters(),lr = 0.01)
+
+    if device == torch.device('cuda'):
+       model = model.cuda()
 
 
     hist = np.zeros(N_steps)
