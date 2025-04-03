@@ -13,3 +13,12 @@ def surf(X,Y,f,tit):
     plt.ylabel('V')
     fig.colorbar(surf)
     plt.savefig(tit+'.png')
+
+def contour(X,Y,f,tit):
+    plt.figure()
+    plt.contourf(X, Y, f.T, 50, cmap='coolwarm')
+    plt.title(tit)
+    plt.colorbar()
+    plt.xlabel('X')
+    plt.ylabel('V')
+    plt.savefig(tit+'.png')

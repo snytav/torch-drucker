@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import torch
-from draw_surf import surf
+from draw_surf import surf,contour
 
 #https://discuss.pytorch.org/t/implementation-of-function-like-numpy-roll/964/6
 def roll(tensor, shift, axis):
@@ -128,7 +128,7 @@ def Vlasov_Poisson_Landau_damping():
     X, Y = np.meshgrid(x,v)
 
 
-    surf(X,Y,f,'Initiat distribution')
+    # surf(X,Y,f,'Initial distribution')
 
 
     f = torch.from_numpy(f)
@@ -139,7 +139,7 @@ def Vlasov_Poisson_Landau_damping():
     f[0, :] = f[-2, :]
 
     # Open maximized figure window
-    plt.figure(figsize=(12, 8))
+    #plt.figure(figsize=(12, 8))
 
     # Start main calculation procedure
     T = 0
@@ -154,6 +154,11 @@ def Vlasov_Poisson_Landau_damping():
     while T <= N_steps:
         optimizer.zero_grad()
         f1 = timestep(x,v,f,T,N,M,dt,dx,dv)
+
+
+        if T % 10 == 0:
+            contour(X,Y,f.detach().numpy(),'t = '+ str(T*dt) )
+
         T += 1
         df = torch.max(torch.abs(f1-f))
         f = f1
