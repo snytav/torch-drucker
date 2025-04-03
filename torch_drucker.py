@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import torch
+from draw_surf import surf
 
 #https://discuss.pytorch.org/t/implementation-of-function-like-numpy-roll/964/6
 def roll(tensor, shift, axis):
@@ -127,18 +128,7 @@ def Vlasov_Poisson_Landau_damping():
     X, Y = np.meshgrid(x,v)
 
 
-    from matplotlib import cm
-    from matplotlib.ticker import LinearLocator
-
-    fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
-    # Plot the surface.
-    surf = ax.plot_surface(X, Y, f.T, cmap=cm.coolwarm,
-                           linewidth=0, antialiased=False)
-    plt.title('Initial distribution')
-    plt.xlabel('X')
-    plt.ylabel('V')
-    ax.colorbar(surf)
-    plt.savefig('initial.png')
+    surf(X,Y,f,'Initiat distribution')
 
 
     f = torch.from_numpy(f)
