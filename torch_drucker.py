@@ -71,7 +71,7 @@ def timestep(x,v,f_in,T,N,M,dt,dx,dv):
         JJ = int(SHIFT)
         SHIFT -= JJ
 
-        f_temp = torch.zeros(M)
+        f_temp = torch.zeros(M).to(E.device)
         if SGN > 0:
             f_temp[0:JJ] = 0.0
             f_temp[JJ:M] = f[I, 0:(M - JJ)]
@@ -81,7 +81,7 @@ def timestep(x,v,f_in,T,N,M,dt,dx,dv):
             f_temp[(M - JJ):M] = 0.0
 
         J = range(1, M - 1)
-        Dvf = torch.zeros(M)
+        Dvf = torch.zeros(M).to(E.device)
         Dvf[1:-1] = SHIFT * (f_temp[1:-1] + SGN * (f_temp[2:] - f_temp[:-2]) * (1.0 - SHIFT))
 
     return f
@@ -166,15 +166,15 @@ def Vlasov_Poisson_Landau_damping():
         f1 = timestep(x,v,f,T,N,M,dt,dx,dv)
 
 
-        if T % 10 == 0:
-            contour(X,Y,f.detach().numpy(),'t = '+ str(T*dt) )
+        if T % 100 == 0:
+            contour(X,Y,f.to(torch.device('cpu')).detach().numpy(),'t = '+ str(T*dt) )
 
         T += 1
         df = torch.max(torch.abs(f1-f))
         f = f1
         lf = loss(model,x,v,f)
-        lf.backward(retain_graph=True)
-        optimizer.step()
+        # lf.backward(retain_graph=True)
+        # optimizer.step()
         print(T,lf.item())
         hist[T] = lf.item()
     plt.figure()
@@ -183,7 +183,7 @@ def Vlasov_Poisson_Landau_damping():
 
 
 
-    np.savetxt('v_final.txt',f.numpy(),'%25.15e')
+    np.savetxt('v_final.txt',f.to(torch('cpu')).numpy(),'%25.15e')
 
 
 Vlasov_Poisson_Landau_damping()
