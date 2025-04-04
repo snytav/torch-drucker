@@ -2,6 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import torch
 from draw_surf import surf,contour
+import torchvision.models as models
+from torch.profiler import profile, record_function, ProfilerActivity
 
 #https://discuss.pytorch.org/t/implementation-of-function-like-numpy-roll/964/6
 def roll(tensor, shift, axis):
@@ -161,9 +163,25 @@ def Vlasov_Poisson_Landau_damping():
 
     hist = np.zeros(N_steps)
 
+    if torch.cuda.is_available():
+        device = 'cuda'
+    elif torch.xpu.is_available():
+        device = 'xpu'
+    else:
+        print('Neither CUDA nor XPU devices are available to demonstrate profiling on acceleration devices')
+        import sys
+        sys.exit(0)
+
     while T <= N_steps:
-        optimizer.zero_grad()
-        f1 = timestep(x,v,f,T,N,M,dt,dx,dv)
+        activities = [ProfilerActivity.CPU, ProfilerActivity.CUDA, ProfilerActivity.XPU]
+        sort_by_keyword = device + "_time_total"
+
+
+        with profile(activities=activities, record_shapes=True) as prof:
+            with record_function("model_inference"):
+                 optimizer.zero_grad()
+                 f1 = timestep(x,v,f,T,N,M,dt,dx,dv)
+        print(prof.key_averages().table(sort_by=sort_by_keyword, row_limit=10))
 
 
         if T % 100 == 0:
