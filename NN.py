@@ -20,7 +20,7 @@ class PDEnet(nn.Module):
 
 class PDEnet3D(nn.Module):
     def __init__(self,N):
-        super(PDEnet,self).__init__()
+        super(PDEnet3D,self).__init__()
         self.N = N
         fc1 = nn.Linear(3,self.N) # первый слой
 
