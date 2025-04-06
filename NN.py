@@ -17,3 +17,21 @@ class PDEnet(nn.Module):
         y = torch.sigmoid(y)
         y = self.fc2(y.reshape(1, self.N))
         return y
+
+class PDEnet3D(nn.Module):
+    def __init__(self,N):
+        super(PDEnet,self).__init__()
+        self.N = N
+        fc1 = nn.Linear(3,self.N) # первый слой
+
+        fc2 = nn.Linear(self.N, 1) # второй слой
+        self.fc1 = fc1
+        self.fc2 = fc2
+
+    def forward(self,x):
+        x = x.reshape(1, 3)
+        y = self.fc1(x)
+        y = torch.sigmoid(y)
+        y = self.fc2(y.reshape(1, self.N))
+        return y
+

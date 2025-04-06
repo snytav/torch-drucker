@@ -152,8 +152,11 @@ def Vlasov_Poisson_Landau_damping():
     # Start main calculation procedure
     T = 0
     f.requires_grad=True
-    from NN import PDEnet
+    from NN import PDEnet,PDEnet3D
     model = PDEnet(50)
+    m3    = PDEnet3D(100)
+    from torch.autograd.functional import jacobian
+
     optimizer = torch.optim.Adam(model.parameters(),lr = 0.01)
 
     if device == torch.device('cuda'):
@@ -165,15 +168,18 @@ def Vlasov_Poisson_Landau_damping():
     while T <= N_steps:
         optimizer.zero_grad()
 
-        f_in  = torch.zeros_like(f)
-        for i,xi in enumerate(x):
-            for j,vi in enumerate(v):
-                xt = torch.cat((xi.reshape(1), vi.reshape(1)))
-                y = model(xt)
-                f_in[i][j] = y
+        # f_in  = torch.zeros_like(f)
+        # for i,xi in enumerate(x):
+        #     for j,vi in enumerate(v):
+        #         xt = torch.cat((xi.reshape(1), vi.reshape(1)))
+        #         y = model(xt)
+        #         f_in[i][j] = y
 
         f1 = timestep(x,v,f,T,N,M,dt,dx,dv)
-        f_out = timestep(x, v, f_in, T, N, M, dt, dx, dv)
+        from pinn_pde_solve import pde_solve
+        pde_solve(f,f1,device)
+
+        #f_out = timestep(x, v, f_in, T, N, M, dt, dx, dv)
         qq = 0
 
 
