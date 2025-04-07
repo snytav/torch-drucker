@@ -9,7 +9,7 @@ def loss_pde(f,f1,device,t,x,v,model):
     for i,ti in enumerate(t):
         for j,xi in enumerate(x):
             for k,vi in enumerate(v):
-                input_point = torch.Tensor([ti,xi, vi])
+                input_point = torch.Tensor([ti,xi, vi]).to(device)
                 input_point.requires_grad_()
                 jac = jacobian(model.forward, input_point, create_graph=True)
                 df_dt = jac[0][0][0]
@@ -17,9 +17,24 @@ def loss_pde(f,f1,device,t,x,v,model):
                 lf += torch.pow(df_dt - df[i][j][k],2.0)
     return lf
 
-def pde_solve(f,f1,device,t,x,v):
 
-    model = PDEnet3D(50)
+def get_NN_solution(t,x,v,model,device):
+    y = torch.ones(x.shape[0],v.shape[0])
+    for i,ti in enumerate(t):
+        for j,xi in enumerate(x):
+            for k,vi in enumerate(v):
+                input_point = torch.Tensor([ti,xi, vi]).to(device)
+                y1 = model(input_point)
+                y[j][k] = y1
+    return y
+
+
+
+
+
+def pde_solve(f,f1,device,t,x,v,model):
+
+    # model = PDEnet3D(50)
     optimizer = torch.optim.Adam(model.parameters(),lr=0.01)
     lf = loss_pde(f,f1,device,t,x,v,model)
     n = 0
@@ -31,5 +46,11 @@ def pde_solve(f,f1,device,t,x,v):
 
         print(n,lf.item())
         n = n + 1
+
+
+    f_NN = get_NN_solution(t,x,v,model)
+    eps = torch.norm(f1 - f_NN)
+    qq = 0
+    return f_NN
 
 

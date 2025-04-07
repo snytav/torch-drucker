@@ -12,7 +12,7 @@ class PDEnet(nn.Module):
         self.fc2 = fc2
 
     def forward(self,x):
-        x = x.reshape(1, 2)
+        x = x.reshape(1, 3)
         y = self.fc1(x)
         y = torch.sigmoid(y)
         y = self.fc2(y.reshape(1, self.N))
