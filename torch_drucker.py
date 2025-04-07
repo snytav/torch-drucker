@@ -177,7 +177,9 @@ def Vlasov_Poisson_Landau_damping():
 
         f1 = timestep(x,v,f,T,N,M,dt,dx,dv)
         from pinn_pde_solve import pde_solve
-        f_NN = pde_solve(f,f1,device,T*torch.ones(1),x,v,model)
+        df = torch.subtract(f1,f)
+        df = df.reshape(1, df.shape[0], df.shape[1])
+        f_NN = pde_solve(df,f1,device,T*torch.ones(1),x,v,model)
 
         #f_out = timestep(x, v, f_in, T, N, M, dt, dx, dv)
         qq = 0
