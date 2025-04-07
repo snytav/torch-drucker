@@ -19,7 +19,7 @@ def loss_pde(f,f1,device,t,x,v,model):
 
 
 def get_NN_solution(t,x,v,model,device):
-    y = torch.ones(x.shape[0],v.shape[0])
+    y = torch.ones(x.shape[0],v.shape[0]).to(device)
     for i,ti in enumerate(t):
         for j,xi in enumerate(x):
             for k,vi in enumerate(v):
@@ -48,7 +48,7 @@ def pde_solve(f,f1,device,t,x,v,model):
         n = n + 1
 
 
-    f_NN = get_NN_solution(t,x,v,model)
+    f_NN = get_NN_solution(t,x,v,model,device)
     eps = torch.norm(f1 - f_NN)
     qq = 0
     return f_NN
