@@ -38,7 +38,7 @@ def pde_solve(f,f1,device,t,x,v,model):
     optimizer = torch.optim.Adam(model.parameters(),lr=0.01)
     lf = loss_pde(f,f1,device,t,x,v,model)
     n = 0
-    while lf.item() > 0.1:
+    while lf.item() > 0.01:
         optimizer.zero_grad()
         lf = loss_pde(f, f1, device, t, x, v, model)
         lf.backward(retain_graph=True)
