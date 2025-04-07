@@ -165,6 +165,9 @@ def Vlasov_Poisson_Landau_damping():
 
     hist = np.zeros(N_steps)
 
+    f3D   = torch.zeros(N_steps,f.shape[0],f.shape[1]).to(device)
+    f1_3D = torch.zeros(N_steps, f.shape[0], f.shape[1]).to(device)
+
     while T <= N_steps:
         optimizer.zero_grad()
 
@@ -176,8 +179,10 @@ def Vlasov_Poisson_Landau_damping():
         #         f_in[i][j] = y
 
         f1 = timestep(x,v,f,T,N,M,dt,dx,dv)
+        f3D[T,:,:]   = f
+        f1_3D[T,:,:] = f1
         from pinn_pde_solve import pde_solve
-        df = torch.subtract(f1,f)
+        #df = torch.subtract(f1,f)
         # df = df.reshape(1, df.shape[0], df.shape[1])
         # f_NN = pde_solve(df,f1,device,T*torch.ones(1),x,v,model)
 
