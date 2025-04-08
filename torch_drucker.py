@@ -87,13 +87,14 @@ def roll(tensor, shift, axis):
 #     return f
 from time_module import timestep
 
-def loss(model,x,v,f):
+def loss(model,t,x,v,f):
     lf = 0.0
-    for i,xi in enumerate(x):
-        for j,vi in enumerate(v):
-            xt = torch.cat((xi.reshape(1),vi.reshape(1)))
-            y = model(xt)
-            lf += torch.abs(f[i,j] - y)
+    for k,ti in enumerate(t):
+        for i,xi in enumerate(x):
+            for j,vi in enumerate(v):
+                xt = torch.cat((ti.reshape(1),xi.reshape(1),vi.reshape(1)))
+                y = model(xt)
+                lf += torch.abs(f[i,j] - y)
     return lf
 
 def Vlasov_Poisson_Landau_damping():
@@ -167,8 +168,9 @@ def Vlasov_Poisson_Landau_damping():
 
     f3D   = torch.zeros(N_steps,f.shape[0],f.shape[1]).to(device)
     f1_3D = torch.zeros(N_steps, f.shape[0], f.shape[1]).to(device)
+    t = torch.arange(0, N_steps, 1).to(device)
 
-    while T <= N_steps:
+    while T < N_steps:
         optimizer.zero_grad()
 
         # f_in  = torch.zeros_like(f)
@@ -190,20 +192,28 @@ def Vlasov_Poisson_Landau_damping():
         qq = 0
 
 
-        if T % 10 == 0:
-            contour(X,Y,f.detach().numpy(),'t = '+ str(T*dt) )
+        if T % 10 == -1:
+            contour(X,Y,f.cpu().detach().numpy(),'t = '+ str(T*dt) )
 
         T += 1
-        df = torch.max(torch.abs(f1-f))
-        f = f1
-        lf = loss(model,x,v,f)
-        lf.backward(retain_graph=True)
-        optimizer.step()
-        print(T,lf.item())
-        hist[T] = lf.item()
-    plt.figure()
-    plt.plot(np.linspace(),hist)
-    plt.savefig('train_history.png')
+        print('time  ================ ',T)
+        # df = torch.max(torch.abs(f1-f))
+        # f = f1
+        # lf = loss(model,t,x,v,f)
+        # lf.backward(retain_graph=True)
+        # optimizer.step()
+        # print(T,lf.item())
+        # hist[T] = lf.item()
+    # np.savetxt('')
+    # plt.figure()
+    # plt.plot(np.linspace(0,T),hist)
+    # plt.savefig('train_history.png')
+
+    #form difference
+    df = torch.subtract(f1_3D,f3D)
+    t = torch.linspace(0,T,N_steps)
+    pde_solve(df[:-1,:,:],f1_3D[-1,:,:],device,t[:-1],x,v,model)
+
 
 
 
