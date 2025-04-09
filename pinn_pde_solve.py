@@ -23,6 +23,8 @@ def pde_solve(df,f1,device,t,x,v,model):
 
     # model = PDEnet3D(50)
     optimizer = torch.optim.Adam(model.parameters(),lr=0.01)
+    from loss_module import loss_pde
+
     lf = loss_pde(df,device,t,x,v,model)
     n = 0
     while lf.item() > 0.01:
