@@ -1,6 +1,8 @@
 import torch
 from torch.autograd.functional import jacobian
 from NN import PDEnet3D
+import matplotlib.pyplot as plt
+import numpy as np
 
 
 
@@ -22,6 +24,7 @@ def get_NN_solution(t,x,v,model,device):
 def pde_solve(df,f1,device,t,x,v,model):
 
     # model = PDEnet3D(50)
+    hist = []
     optimizer = torch.optim.Adam(model.parameters(),lr=0.01)
     from loss_module import loss_pde
 
@@ -34,8 +37,15 @@ def pde_solve(df,f1,device,t,x,v,model):
         optimizer.step()
 
         print(n,lf.item())
+        hist.append(lf.item())
         n = n + 1
 
+    hist = np.array(hist)
+    plt.figure()
+    plt.plot(hist,color='black')
+    plt.title('Loss value')
+    plt.xlabel('epoch number')
+    plt.savefig('loss_vs_epoch.png')
 
     f_NN = get_NN_solution(t,x,v,model,device)
     eps = torch.max(torch.abs(f1 - f_NN))
